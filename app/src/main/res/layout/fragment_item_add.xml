@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" android:minWidth="200dp">
+
+    <TextView
+            android:text="항목 형식"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content" android:id="@+id/textView4"
+            android:textAlignment="center"
+            android:background="#888888"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+    <RadioGroup
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:id="@+id/radioType"
+            app:layout_constraintTop_toBottomOf="@+id/textView4" app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+        <RadioButton
+                android:text="문자 형식"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/textType" android:layout_weight="0.5"
+                android:checked="true"/>
+        <RadioButton
+                android:text="날짜 형식"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/calType" android:layout_weight="0.5"/>
+    </RadioGroup>
+    <TextView
+            android:text="항목 이름"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content" android:id="@+id/textView5"
+            android:background="#888888"
+            android:textAlignment="center" app:layout_constraintTop_toBottomOf="@+id/radioType"
+            app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="12dp"/>
+
+    <EditText
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:ems="10"
+            android:id="@+id/nameEditText"
+            android:hint="항목 이름"
+            app:layout_constraintTop_toBottomOf="@+id/textView5" app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" android:focusableInTouchMode="true" android:focusable="true">
+        <requestFocus/>
+    </EditText>
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@+id/nameEditText" app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" app:layout_constraintBottom_toBottomOf="parent">
+        <Button
+                android:text="취소"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/cancel_btn"
+                android:layout_weight="1" android:layout_margin="3dp"/>
+        <Button
+                android:text="저장"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/save_btn"
+                android:layout_weight="1" android:layout_margin="3dp"/>
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

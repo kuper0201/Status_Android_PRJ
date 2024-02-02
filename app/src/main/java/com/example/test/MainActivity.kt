@@ -5,6 +5,9 @@ import android.os.Bundle
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import com.example.test.databinding.ActivityMainBinding
+import com.example.test.home.HomeFragment
+import com.example.test.item.ItemFragment
+import com.example.test.setting.SettingFragment
 
 private const val TAG_SETTING = "setting_fragment"
 private const val TAG_HOME = "home_fragment"
@@ -22,9 +25,9 @@ class MainActivity : AppCompatActivity() {
 
         binding.navigationView.setOnItemSelectedListener { item ->
             when(item.itemId) {
-                R.id.settingFragment -> setFragment(TAG_SETTING, SettingFragment())
                 R.id.homeFragment -> setFragment(TAG_HOME, HomeFragment())
                 R.id.itemFragment -> setFragment(TAG_ITEM, ItemFragment())
+                R.id.settingFragment -> setFragment(TAG_SETTING, SettingFragment())
             }
             true
         }
@@ -39,35 +42,23 @@ class MainActivity : AppCompatActivity() {
         }
 
         val home = manager.findFragmentByTag(TAG_HOME)
-        val setting = manager.findFragmentByTag(TAG_SETTING)
         val item = manager.findFragmentByTag(TAG_ITEM)
+        val setting = manager.findFragmentByTag(TAG_SETTING)
 
-        if (home != null) {
-            fragTransaction.hide(home)
-        }
+        with(fragTransaction) {
+            if (home != null) hide(home)
+            if (item != null) hide(item)
+            if (setting != null) hide(setting)
 
-        if (setting != null) {
-            fragTransaction.hide(setting)
-        }
-
-        if(item != null) {
-            fragTransaction.hide(item)
-        }
-
-        if (tag == TAG_HOME) {
-            if (home != null) {
-                fragTransaction.show(home)
+            if (tag == TAG_HOME) {
+                if (home != null) show(home)
+            } else if (tag == TAG_SETTING) {
+                if (setting != null) show(setting)
+            } else if(tag == TAG_ITEM) {
+                if (item != null) show(item)
             }
-        } else if (tag == TAG_SETTING) {
-            if (setting != null){
-                fragTransaction.show(setting)
-            }
-        } else if(tag == TAG_ITEM) {
-            if (item != null) {
-                fragTransaction.show(item)
-            }
-        }
 
-        fragTransaction.commitAllowingStateLoss()
+            commitAllowingStateLoss()
+        }
     }
 }
