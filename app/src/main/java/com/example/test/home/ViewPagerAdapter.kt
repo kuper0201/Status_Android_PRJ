@@ -235,11 +235,17 @@ class ViewPagerAdapter: RecyclerView.Adapter<ViewPagerAdapter.PagerViewHolder> {
         fun bind() {
             val pos = adapterPosition
             imageItem.setOnClickListener {
-                Toast.makeText(mContext, pos.toString() +" selected", Toast.LENGTH_SHORT).show()
+                val largeFragment = LargeImageFragment(imgList[pos])
+                largeFragment.show(fragmentManager, largeFragment.tag)
             }
 
-            val over = addTwoImages(imgList[pos])
-            imageItem.setImageBitmap(over)
+            imageItem.setOnLongClickListener {
+                imgList.removeAt(pos)
+                notifyItemRemoved(pos)
+                return@setOnLongClickListener(true)
+            }
+
+            imageItem.setImageBitmap(addTwoImages(imgList[pos]))
         }
     }
 }
