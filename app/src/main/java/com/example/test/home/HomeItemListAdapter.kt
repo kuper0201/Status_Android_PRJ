@@ -13,6 +13,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.RecyclerView
 import com.example.test.R
+import com.example.test.SharedViewModel
 import com.example.test.db.ItemData
 import com.example.test.db.LocalDatabase
 import com.example.test.item.ItemListAdapter
@@ -24,17 +25,11 @@ import kotlin.collections.ArrayList
 class HomeItemListAdapter : RecyclerView.Adapter<HomeItemListAdapter.BoardViewHolder> {
     private lateinit var mContext: Context
     var itemList: ArrayList<ItemData>
-    var valueList: ArrayList<String>
-    private var db: LocalDatabase
-    private var inter: DrawInter
+    private var sharedViewModel: SharedViewModel
 
-    constructor(db: LocalDatabase, inter: DrawInter) {
+    constructor(sharedViewModel: SharedViewModel) {
         this.itemList = ArrayList()
-        this.valueList = ArrayList()
-        this.db = db
-        this.inter = inter
-
-        getAllData()
+        this.sharedViewModel = sharedViewModel
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BoardViewHolder {
@@ -45,11 +40,14 @@ class HomeItemListAdapter : RecyclerView.Adapter<HomeItemListAdapter.BoardViewHo
     }
 
     override fun onBindViewHolder(holder: HomeItemListAdapter.BoardViewHolder, position: Int) {
+        val strList = sharedViewModel.repo.getStringList().value!!
+
+        val s = itemList[position].itemName
         holder.name.text = itemList[position].itemName
+        holder.editContent.setText(strList.get(itemList[position].itemName))
         val tw = object : TextWatcher {
             override fun afterTextChanged(p0: Editable?) {
-                valueList.set(holder.adapterPosition, p0.toString())
-                inter.reDraw()
+                sharedViewModel.updateStringData(s, p0.toString())
             }
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
 
@@ -80,23 +78,4 @@ class HomeItemListAdapter : RecyclerView.Adapter<HomeItemListAdapter.BoardViewHo
         val editContent = itemView.findViewById<EditText>(R.id.edit_content)
         val moreAction = itemView.findViewById<ImageButton>(R.id.more_action)
     }
-
-    @SuppressLint("NotifyDataSetChanged")
-    fun getAllData() {
-        CoroutineScope(Dispatchers.Main).launch {
-            val items = withContext(Dispatchers.IO) {
-                db.itemDAO().getAllItemData()
-            }
-            itemList = ArrayList(items)
-            for(i in 0 until itemList.count()) {
-                valueList.add("")
-            }
-            notifyDataSetChanged()
-            inter.reDraw()
-        }
-    }
-}
-
-interface DrawInter {
-    fun reDraw()
 }

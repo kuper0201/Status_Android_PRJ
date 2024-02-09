@@ -7,14 +7,20 @@ import android.graphics.*
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextPaint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.ImageView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.test.R
+import com.example.test.SharedViewModel
+import com.example.test.db.ItemData
 import com.example.test.utils.ProgressDialogFragment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,16 +31,21 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 
+
 class ViewPagerAdapter: RecyclerView.Adapter<ViewPagerAdapter.PagerViewHolder> {
     private lateinit var mContext: Context
     var fragmentManager: FragmentManager
     var imgList: ArrayList<Bitmap>
-    var itemList: ArrayList<Pair<String, String>>
+    var itemList: ArrayList<ItemData>
+    var stringList: HashMap<String, String>
+    var sharedViewModel: SharedViewModel
 
-    constructor(fm: FragmentManager) {
+    constructor(fm: FragmentManager, sharedViewModel: SharedViewModel) {
         this.fragmentManager = fm
+        this.sharedViewModel = sharedViewModel
         this.imgList = ArrayList()
         this.itemList = ArrayList()
+        this.stringList = HashMap()
     }
 
     val outBorder = Paint().apply {
@@ -98,10 +109,10 @@ class ViewPagerAdapter: RecyclerView.Adapter<ViewPagerAdapter.PagerViewHolder> {
 
         val bitmap = origin_img.copy(Bitmap.Config.ARGB_8888, true)
 
-        val maxTitle = itemList.maxBy { it.first.length }
+        val maxTitle = itemList.maxBy { it.itemName.length }
 
         val maxTRect = Rect()
-        txt.getTextBounds(maxTitle.first, 0, maxTitle.first.length, maxTRect)
+        txt.getTextBounds(maxTitle.itemName, 0, maxTitle.itemName.length, maxTRect)
         resizeRect(maxTRect)
 
         val w = 300f
@@ -121,14 +132,29 @@ class ViewPagerAdapter: RecyclerView.Adapter<ViewPagerAdapter.PagerViewHolder> {
         canvas.translate(20f, 10f - txt.fontMetrics.top)
 
         for(i in 0 until itemList.count()) {
-            val title = itemList[i].first
-            val content = itemList[i].second
+            val title = itemList[i].itemName
+            val content = stringList.getOrDefault(title, "")
 
             canvas.drawRect(maxTRect, innerBorder)
             canvas.drawText(title, (maxTRect.right + maxTRect.left) / 2.0f, 0f, txt)
 
-            canvas.drawRect(maxCRect, innerBorder)
-            canvas.drawText(content, (maxCRect.right + maxCRect.left) / 2.0f, 0f, txt)
+            val cBound = Rect()
+            txt.getTextBounds(content, 0, content.length, cBound)
+            cBound.left += maxCRect.left
+            cBound.right += maxCRect.left
+
+            if(cBound.right >= maxCRect.right) {
+                val l = content.substring(0, 10)
+                canvas.drawText(l, (maxCRect.right + maxCRect.left) / 2.0f, 0f, txt)
+                val l2 = content.substring(10, content.length)
+                canvas.drawText(l2, (maxCRect.right + maxCRect.left) / 2.0f, 30f, txt)
+                val newRct = Rect(maxCRect)
+                newRct.bottom += 30
+                canvas.drawRect(newRct, innerBorder)
+            } else {
+                canvas.drawRect(maxCRect, innerBorder)
+                canvas.drawText(content, (maxCRect.right + maxCRect.left) / 2.0f, 0f, txt)
+            }
 
             canvas.translate(0f, (maxTRect.bottom.toFloat() - maxTRect.top.toFloat()))
         }
@@ -202,13 +228,13 @@ class ViewPagerAdapter: RecyclerView.Adapter<ViewPagerAdapter.PagerViewHolder> {
             }
             return true
         } else {
-            val rootFolder = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "Skills") //루트 폴더 생성
+            val rootFolder = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "현황판") //루트 폴더 생성
             if (!rootFolder.exists()) {
                 rootFolder.mkdirs()
             }
 
             val imageRoot = File(
-                "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/Skills",
+                "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/현황판",
                 "${currentTime}.jpg"
             )
 
@@ -240,8 +266,7 @@ class ViewPagerAdapter: RecyclerView.Adapter<ViewPagerAdapter.PagerViewHolder> {
             }
 
             imageItem.setOnLongClickListener {
-                imgList.removeAt(pos)
-                notifyItemRemoved(pos)
+                sharedViewModel.removeImg(pos)
                 return@setOnLongClickListener(true)
             }
 

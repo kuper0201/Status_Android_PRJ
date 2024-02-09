@@ -16,20 +16,23 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
+import com.example.test.SharedViewModel
 import com.example.test.databinding.FragmentHomeBinding
 import com.example.test.db.ItemData
 import com.example.test.db.LocalDatabase
+import com.example.test.db.SharedViewModelFactory
 import com.example.test.utils.ProgressDialogFragment
 import kotlinx.coroutines.*
 
-class HomeFragment : Fragment(), DrawInter {
+class HomeFragment(val sharedViewModel: SharedViewModel) : Fragment() {
     private var mBinding: FragmentHomeBinding? = null
     private val binding get() = mBinding!!
 
-    private lateinit var db: LocalDatabase
     private lateinit var listAdapter: HomeItemListAdapter
     private lateinit var viewPagerAdapter: ViewPagerAdapter
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
@@ -38,9 +41,8 @@ class HomeFragment : Fragment(), DrawInter {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        db = LocalDatabase.getInstance(requireContext())!!
-        listAdapter = HomeItemListAdapter(db, this)
-        viewPagerAdapter = ViewPagerAdapter(parentFragmentManager)
+        listAdapter = HomeItemListAdapter(sharedViewModel)
+        viewPagerAdapter = ViewPagerAdapter(parentFragmentManager, sharedViewModel)
         activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             if (it.resultCode == Activity.RESULT_OK) {
                 val itemCount = it.data?.clipData?.itemCount!!
@@ -62,43 +64,9 @@ class HomeFragment : Fragment(), DrawInter {
                     }
 
                     ret.await()
-                    viewPagerAdapter.imgList = lst
-                    viewPagerAdapter.notifyDataSetChanged()
+                    sharedViewModel.updateImageList(lst)
                 }
             }
-        }
-
-        val pref = requireActivity().getSharedPreferences("isFirst", Activity.MODE_PRIVATE)
-        val first = pref.getBoolean("isFirst", false)
-        if(!first) {
-            val editor = pref.edit()
-            editor.putBoolean("isFirst", true)
-            editor.commit()
-
-            val firstItems = ArrayList<ItemData>()
-            firstItems.add(ItemData("공 종", true, 0))
-            firstItems.add(ItemData("날 짜", false, 1))
-
-            CoroutineScope(Dispatchers.Main).launch {
-                val ret = CoroutineScope(Dispatchers.IO).async {
-                    for(i in firstItems) {
-                        db.itemDAO().insertData(i)
-                    }
-                }
-
-                ret.await()
-                listAdapter.getAllData()
-            }
-
-//            listAdapter.itemList = firstItems
-//            listAdapter.notifyDataSetChanged()
-        }
-    }
-
-    override fun onHiddenChanged(hidden: Boolean) {
-        super.onHiddenChanged(hidden)
-        if(!hidden) {
-            listAdapter.getAllData()
         }
     }
 
@@ -139,20 +107,25 @@ class HomeFragment : Fragment(), DrawInter {
             viewPagerAdapter.save(requireContext())
         }
 
+        sharedViewModel.repo.getItemList().observe(viewLifecycleOwner, Observer {
+            listAdapter.itemList = it
+            listAdapter.notifyDataSetChanged()
+
+            viewPagerAdapter.itemList = it
+            viewPagerAdapter.notifyDataSetChanged()
+        })
+
+        sharedViewModel.repo.getStringList().observe(viewLifecycleOwner, Observer {
+            viewPagerAdapter.stringList = it
+            viewPagerAdapter.notifyDataSetChanged()
+        })
+
+        sharedViewModel.repo.getImgList().observe(viewLifecycleOwner, Observer {
+            viewPagerAdapter.imgList = it
+            viewPagerAdapter.notifyDataSetChanged()
+        })
+
         return binding.root
-    }
-
-    override fun reDraw() {
-        val il = listAdapter.itemList
-        val vl = listAdapter.valueList
-
-        val tmp_list = il.zip(vl) { a, b ->
-            a.itemName to b
-        }
-        val res = ArrayList<Pair<String, String>>(tmp_list)
-
-        viewPagerAdapter.itemList = res
-        viewPagerAdapter.notifyDataSetChanged()
     }
 
     override fun onDestroyView() {

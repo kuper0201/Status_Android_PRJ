@@ -41,18 +41,19 @@ class SwipeBackgroundHelper {
         }
 
         private fun getStartContainerRectangle(viewItem: View, iconWidth: Int, topMargin: Int, dx: Float): Rect {
-            if(dx<0){
+            if(dx < 0) {
                 val leftBound = viewItem.right + dx.toInt()
                 val rightBound = viewItem.right + dx.toInt() + iconWidth
                 val topBound = viewItem.top + topMargin
                 val bottomBound = viewItem.bottom - topMargin
 
                 return Rect(leftBound, topBound, rightBound, bottomBound)
-            }else{
+            } else {
                 val leftBound =  dx.toInt() - iconWidth
                 val rightBound =  dx.toInt()
                 val topBound = viewItem.top + topMargin
                 val bottomBound = viewItem.bottom - topMargin
+
                 return Rect(leftBound, topBound, rightBound, bottomBound)
             }
         }
@@ -69,16 +70,10 @@ class SwipeBackgroundHelper {
         }
 
         private fun getBackGroundRectangle(viewItem: View, dX: Float): RectF {
-            if(dX<0) {
-                return RectF(
-                    viewItem.right.toFloat() + dX, viewItem.top.toFloat(), viewItem.right.toFloat(),
-                    viewItem.bottom.toFloat()
-                )
-            }else {
-                return RectF(
-                    0f , viewItem.top.toFloat(), dX,
-                    viewItem.bottom.toFloat()
-                )
+            if(dX < 0) {
+                return RectF(viewItem.right.toFloat() + dX, viewItem.top.toFloat(), viewItem.right.toFloat(), viewItem.bottom.toFloat())
+            } else {
+                return RectF(0f , viewItem.top.toFloat(), dX, viewItem.bottom.toFloat())
             }
         }
     }

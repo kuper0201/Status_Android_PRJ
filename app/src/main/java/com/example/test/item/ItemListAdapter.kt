@@ -9,13 +9,14 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
 import com.example.test.R
+import com.example.test.SharedViewModel
 import com.example.test.db.ItemData
 import com.example.test.db.LocalDatabase
 import kotlinx.coroutines.*
 import java.util.*
 import kotlin.collections.ArrayList
 
-class ItemListAdapter(var itemList: ArrayList<ItemData>, var db: LocalDatabase) : RecyclerView.Adapter<ItemListAdapter.BoardViewHolder>(), ItemTouchHelperCallback.OnItemMoveListener {
+class ItemListAdapter(var itemList: ArrayList<ItemData>, val sharedViewModel: SharedViewModel) : RecyclerView.Adapter<ItemListAdapter.BoardViewHolder>(), ItemTouchHelperCallback.OnItemMoveListener {
     private lateinit var startDragListener: OnStartDragListener
     private lateinit var mContext: Context
 
@@ -63,53 +64,6 @@ class ItemListAdapter(var itemList: ArrayList<ItemData>, var db: LocalDatabase) 
     }
 
     override fun onItemSwiped(position: Int) {
-        val data = itemList.get(position)
-        itemList.remove(data)
-        notifyItemRemoved(position)
-
-        CoroutineScope(Dispatchers.IO).launch {
-            db.itemDAO().deleteAllItemData()
-            for((idx, item) in itemList.withIndex()) {
-                var reorderedItem = ItemData(itemName = item.itemName, itemType = item.itemType, itemOrder = idx)
-                db.itemDAO().insertData(reorderedItem)
-            }
-        }
-    }
-
-    override fun afterDrag() {
-        CoroutineScope(Dispatchers.IO).launch {
-            db.itemDAO().deleteAllItemData()
-            for ((idx, item) in itemList.withIndex()) {
-                var reorderedItem = ItemData(itemName = item.itemName, itemType = item.itemType, itemOrder = idx)
-                db.itemDAO().insertData(reorderedItem)
-            }
-        }
-    }
-
-    fun getAllData() {
-        CoroutineScope(Dispatchers.Main).launch {
-            var items = withContext(Dispatchers.IO) {
-                db.itemDAO().getAllItemData()
-            }
-
-            itemList = ArrayList(items)
-            notifyDataSetChanged()
-        }
-    }
-
-    fun insertData(data: ItemData) {
-        if(itemList.contains(data)) {
-            Toast.makeText(mContext, "${data.itemName} 항목이 이미 존재합니다.", Toast.LENGTH_SHORT).show()
-            return
-        }
-        
-        CoroutineScope(Dispatchers.Main).launch {
-            CoroutineScope(Dispatchers.IO).launch {
-                db.itemDAO().insertData(data)
-            }
-
-            itemList.add(data)
-            notifyItemInserted(itemList.size - 1)
-        }
+        sharedViewModel.removeItem(position)
     }
 }

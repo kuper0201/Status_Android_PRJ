@@ -19,19 +19,19 @@
 
             <TextView
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:id="@+id/nameText"
+                    android:layout_height="match_parent" android:id="@+id/nameText"
                     android:textAlignment="center" android:text="항목명"
                     android:textSize="20sp"
-                    android:layout_weight="0.3"/>
+                    android:layout_weight="0.3" android:gravity="center"/>
             <EditText
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:inputType="text"
                     android:id="@+id/edit_content" android:layout_weight="0.6" android:textSize="20sp"/>
             <ImageButton
                     android:src="@android:drawable/btn_star"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:id="@+id/more_action" android:layout_weight="0.1"/>
+                    android:layout_height="match_parent" android:id="@+id/more_action" android:layout_weight="0.1"/>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>
