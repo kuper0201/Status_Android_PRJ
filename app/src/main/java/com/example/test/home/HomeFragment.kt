@@ -1,7 +1,6 @@
 package com.example.test.home
 
 import android.app.Activity
-import android.app.Dialog
 import android.content.Intent
 import android.graphics.*
 import android.os.Build
@@ -10,8 +9,6 @@ import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ProgressBar
-import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -20,29 +17,26 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.MarginPageTransformer
-import androidx.viewpager2.widget.ViewPager2
-import com.example.test.SharedViewModel
 import com.example.test.databinding.FragmentHomeBinding
-import com.example.test.db.ItemData
-import com.example.test.db.LocalDatabase
-import com.example.test.db.SharedViewModelFactory
 import com.example.test.utils.ProgressDialogFragment
 import kotlinx.coroutines.*
 
-class HomeFragment(val sharedViewModel: SharedViewModel) : Fragment() {
+class HomeFragment : Fragment(), HomeItemListAdapter.HomeItemListInterface {
     private var mBinding: FragmentHomeBinding? = null
     private val binding get() = mBinding!!
 
-    private lateinit var listAdapter: HomeItemListAdapter
+    private lateinit var homeItemListAdapter: HomeItemListAdapter
     private lateinit var viewPagerAdapter: ViewPagerAdapter
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
+    private lateinit var viewModel: HomeViewModel
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewModel = ViewModelProvider(this, HomeViewModel.Factory(requireActivity().application)).get(HomeViewModel::class.java)
 
-        listAdapter = HomeItemListAdapter(sharedViewModel)
-        viewPagerAdapter = ViewPagerAdapter(parentFragmentManager, sharedViewModel)
+        homeItemListAdapter = HomeItemListAdapter(this)
+        viewPagerAdapter = ViewPagerAdapter(parentFragmentManager)
         activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             if (it.resultCode == Activity.RESULT_OK) {
                 val itemCount = it.data?.clipData?.itemCount!!
@@ -64,7 +58,7 @@ class HomeFragment(val sharedViewModel: SharedViewModel) : Fragment() {
                     }
 
                     ret.await()
-                    sharedViewModel.updateImageList(lst)
+                    viewModel.setImages(lst)
                 }
             }
         }
@@ -75,14 +69,30 @@ class HomeFragment(val sharedViewModel: SharedViewModel) : Fragment() {
         super.onCreateView(inflater, container, savedInstanceState)
         mBinding = FragmentHomeBinding.inflate(inflater, container, false)
 
-        val list = binding.homeItemList
-        list.apply {
-            adapter = listAdapter
+        viewModel.getItemList().observe(viewLifecycleOwner, Observer {
+            homeItemListAdapter.itemList = it
+            homeItemListAdapter.notifyDataSetChanged()
+
+            viewPagerAdapter.itemList = it
+            viewPagerAdapter.notifyDataSetChanged()
+        })
+
+        viewModel.getStringMap().observe(viewLifecycleOwner, Observer {
+            viewPagerAdapter.stringList = it
+            viewPagerAdapter.notifyDataSetChanged()
+        })
+
+        viewModel.getImages().observe(viewLifecycleOwner, Observer {
+            viewPagerAdapter.imgList = it
+            viewPagerAdapter.notifyDataSetChanged()
+        })
+
+        binding.homeItemList.apply {
+            adapter = homeItemListAdapter
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
         }
 
-        val pagerView = binding.viewPager
-        pagerView.apply {
+        binding.viewPager.apply {
             clipToPadding = false
             clipChildren = false
             offscreenPageLimit = 1
@@ -92,8 +102,7 @@ class HomeFragment(val sharedViewModel: SharedViewModel) : Fragment() {
         }
 
         binding.imageBtn.setOnClickListener {
-            val intent = Intent()
-            intent.apply {
+            val intent = Intent().apply {
                 setData(MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
                 setType("image/*")
                 setAction(Intent.ACTION_GET_CONTENT)
@@ -107,29 +116,15 @@ class HomeFragment(val sharedViewModel: SharedViewModel) : Fragment() {
             viewPagerAdapter.save(requireContext())
         }
 
-        sharedViewModel.repo.getItemList().observe(viewLifecycleOwner, Observer {
-            listAdapter.itemList = it
-            listAdapter.notifyDataSetChanged()
-
-            viewPagerAdapter.itemList = it
-            viewPagerAdapter.notifyDataSetChanged()
-        })
-
-        sharedViewModel.repo.getStringList().observe(viewLifecycleOwner, Observer {
-            viewPagerAdapter.stringList = it
-            viewPagerAdapter.notifyDataSetChanged()
-        })
-
-        sharedViewModel.repo.getImgList().observe(viewLifecycleOwner, Observer {
-            viewPagerAdapter.imgList = it
-            viewPagerAdapter.notifyDataSetChanged()
-        })
-
         return binding.root
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         mBinding = null
+    }
+
+    override fun updateStringData(origin: String, to: String) {
+        viewModel.updateStr(origin, to)
     }
 }

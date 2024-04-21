@@ -1,53 +1,40 @@
 package com.example.test.home
 
-import android.annotation.SuppressLint
-import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
-import android.view.MotionEvent
-import android.view.View
 import android.view.ViewGroup
-import android.widget.*
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.RecyclerView
-import com.example.test.R
-import com.example.test.SharedViewModel
+import com.example.test.databinding.HomeListItemBinding
 import com.example.test.db.ItemData
-import com.example.test.db.LocalDatabase
-import com.example.test.item.ItemListAdapter
-import kotlinx.coroutines.*
-import org.w3c.dom.Text
-import java.util.*
 import kotlin.collections.ArrayList
 
-class HomeItemListAdapter : RecyclerView.Adapter<HomeItemListAdapter.BoardViewHolder> {
-    private lateinit var mContext: Context
-    var itemList: ArrayList<ItemData>
-    private var sharedViewModel: SharedViewModel
+class HomeItemListAdapter(val inter: HomeItemListInterface) : RecyclerView.Adapter<HomeItemListAdapter.BoardViewHolder>() {
+    interface HomeItemListInterface {
+        fun updateStringData(origin: String, to: String)
+    }
 
-    constructor(sharedViewModel: SharedViewModel) {
-        this.itemList = ArrayList()
-        this.sharedViewModel = sharedViewModel
+    var itemList: List<ItemData>
+    var strMap: HashMap<String, String>
+
+    init {
+        itemList = ArrayList()
+        strMap = HashMap()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BoardViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.home_list_item, parent, false)
-        mContext = view.context
-
-        return BoardViewHolder(view)
+        val listItemBinding = HomeListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return BoardViewHolder(listItemBinding)
     }
 
     override fun onBindViewHolder(holder: HomeItemListAdapter.BoardViewHolder, position: Int) {
-        val strList = sharedViewModel.repo.getStringList().value!!
+        val itName = itemList[position].itemName
+        holder.bind(itName, strMap.getOrDefault(itName, ""))
 
-        val s = itemList[position].itemName
-        holder.name.text = itemList[position].itemName
-        holder.editContent.setText(strList.get(itemList[position].itemName))
+        holder.editContent.setText(strMap.get(itName))
         val tw = object : TextWatcher {
             override fun afterTextChanged(p0: Editable?) {
-                sharedViewModel.updateStringData(s, p0.toString())
+                inter.updateStringData(itName, p0.toString())
             }
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
 
@@ -73,9 +60,14 @@ class HomeItemListAdapter : RecyclerView.Adapter<HomeItemListAdapter.BoardViewHo
         return itemList.count()
     }
 
-    inner class BoardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val name = itemView.findViewById<TextView>(R.id.nameText)
-        val editContent = itemView.findViewById<EditText>(R.id.edit_content)
-        val moreAction = itemView.findViewById<ImageButton>(R.id.more_action)
+    inner class BoardViewHolder(val binding: HomeListItemBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(itemName: String, itemContent: String) {
+            binding.itemName = itemName
+            binding.itemContent = itemContent
+        }
+
+        val name = binding.nameText
+        val editContent = binding.editContent
+        val moreAction = binding.moreAction
     }
 }

@@ -1,21 +1,25 @@
 package com.example.test.db
 
+import androidx.lifecycle.LiveData
 import androidx.room.*
 
 @Dao
 interface ItemDAO {
     @Insert
-    suspend fun insertData(keyword: ItemData)
+    fun insertData(keyword: ItemData)
 
     @Query("select * from status_item order by itemOrder ASC")
-    suspend fun getAllItemData(): List<ItemData>
+    fun getAllItemData(): LiveData<List<ItemData>>
+
+    @Query("select count(itemName) from status_item where itemName=:item")
+    fun itemContains(item: String): Long
 
     @Query("delete from status_item")
-    suspend fun deleteAllItemData()
+    fun deleteAllItemData()
 
     @Delete
-    suspend fun deleteItemData(item: ItemData)
+    fun deleteItemData(item: ItemData)
 
     @Update
-    suspend fun updateItemData(item: ItemData)
+    fun updateItemData(item: ItemData)
 }

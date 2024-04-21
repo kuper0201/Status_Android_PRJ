@@ -7,11 +7,7 @@ import android.graphics.*
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import android.text.Layout
-import android.text.StaticLayout
-import android.text.TextPaint
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Toast
@@ -19,7 +15,7 @@ import androidx.annotation.RequiresApi
 import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.test.R
-import com.example.test.SharedViewModel
+import com.example.test.databinding.ImageListItemBinding
 import com.example.test.db.ItemData
 import com.example.test.utils.ProgressDialogFragment
 import kotlinx.coroutines.CoroutineScope
@@ -31,18 +27,15 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 
-
 class ViewPagerAdapter: RecyclerView.Adapter<ViewPagerAdapter.PagerViewHolder> {
     private lateinit var mContext: Context
     var fragmentManager: FragmentManager
-    var imgList: ArrayList<Bitmap>
-    var itemList: ArrayList<ItemData>
+    var imgList: List<Bitmap>
+    var itemList: List<ItemData>
     var stringList: HashMap<String, String>
-    var sharedViewModel: SharedViewModel
 
-    constructor(fm: FragmentManager, sharedViewModel: SharedViewModel) {
+    constructor(fm: FragmentManager) {
         this.fragmentManager = fm
-        this.sharedViewModel = sharedViewModel
         this.imgList = ArrayList()
         this.itemList = ArrayList()
         this.stringList = HashMap()
@@ -72,10 +65,8 @@ class ViewPagerAdapter: RecyclerView.Adapter<ViewPagerAdapter.PagerViewHolder> {
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PagerViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.image_list_item, parent, false)
-        mContext = view.context
-
-        return PagerViewHolder(view)
+        val binding = ImageListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return PagerViewHolder(binding)
     }
 
     fun resizeRect(rect: Rect) {
@@ -255,22 +246,20 @@ class ViewPagerAdapter: RecyclerView.Adapter<ViewPagerAdapter.PagerViewHolder> {
         }
     }
 
-    inner class PagerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val imageItem = itemView.findViewById<ImageView>(R.id.imageView)
-
+    inner class PagerViewHolder(val binding: ImageListItemBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind() {
             val pos = adapterPosition
-            imageItem.setOnClickListener {
+            binding.imageView.setOnClickListener {
                 val largeFragment = LargeImageFragment(imgList[pos])
                 largeFragment.show(fragmentManager, largeFragment.tag)
             }
 
-            imageItem.setOnLongClickListener {
-                sharedViewModel.removeImg(pos)
-                return@setOnLongClickListener(true)
+            binding.imageView.setOnLongClickListener {
+//                sharedViewModel.removeImg(pos)
+                return@setOnLongClickListener true
             }
 
-            imageItem.setImageBitmap(addTwoImages(imgList[pos]))
+            binding.imageView.setImageBitmap(addTwoImages(imgList[pos]))
         }
     }
 }
